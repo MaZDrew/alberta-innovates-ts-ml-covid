@@ -35,7 +35,7 @@ uni_data.plot()
 
 TRAIN_SPLIT = round(len(uni_data)*0.7)
 
-tf.set_random_seed(69)
+tf.random.set_seed(69)
 
 uni_data = uni_data.values
 
