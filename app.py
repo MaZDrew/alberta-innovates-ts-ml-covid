@@ -1,126 +1,86 @@
-# -*- coding: utf-8 -*-
+# -- coding: utf-8 --
 """
 Created on Sat Apr 11 11:47:12 2020
 
-@author: Brayden
+@author: Brayden, Morgan
 """
 
-from modules.machinelearning import data_request
 import numpy as np
-import tensorflow as tf
-import os
 import pandas as pd
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 
+from modules.machinelearning import data_request
 
-def univariate_data(dataset, start_index, end_index, history_size, target_size):
-  data = []
-  labels = []
+from pandas.tseries.offsets import DateOffset
 
-  start_index = start_index + history_size
-  if end_index is None:
-    end_index = len(dataset) - target_size
+from sklearn.preprocessing import MinMaxScaler
 
-  for i in range(start_index, end_index):
-    indices = range(i-history_size, i)
-    # Reshape data from (history_size,) to (history_size, 1)
-    data.append(np.reshape(dataset[indices], (history_size, 1)))
-    labels.append(dataset[i+target_size])
-  return np.array(data), np.array(labels)
+from tensorflow import keras
+from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.layers import Dropout
 
+import warnings
+warnings.filterwarnings("ignore")
 
-uni_data = data_request.getData()
-uni_data.plot()
+df = data_request.getData();
 
-TRAIN_SPLIT = round(len(uni_data)*0.7)
+### Show the original data set
+print(df);
 
-tf.random.set_seed(69)
+train = df
 
-uni_data = uni_data.values
+scaler = MinMaxScaler()
+scaler.fit(train)
+train = scaler.transform(train)
 
-uni_train_mean = uni_data[:TRAIN_SPLIT].mean()
-uni_train_std = uni_data[:TRAIN_SPLIT].std()
+n_input = 7
+n_features = 1
+generator = TimeseriesGenerator(train, train, length = n_input, batch_size = 2)
 
-uni_data = (uni_data - uni_train_mean)/uni_train_std
+model = Sequential()
+model.add(LSTM(200, activation='relu', input_shape = (n_input, n_features)))
+model.add(Dropout(0.15))
+model.add(Dense(1))
 
-univariate_past_history = 14
-univariate_future_target = 0
+optimizer = keras.optimizers.Adam(learning_rate=0.001)
+model.compile(optimizer=optimizer, loss = 'mse')
 
-x_train_uni, y_train_uni = univariate_data(uni_data, 0, TRAIN_SPLIT, 
-                                           univariate_past_history,
-                                           univariate_future_target)
+history = model.fit_generator(generator, epochs = 20, verbose = 1)
 
-x_val_uni, y_val_uni = univariate_data(uni_data, TRAIN_SPLIT, None, 
-                                        univariate_past_history,
-                                        univariate_future_target)
+hist = pd.DataFrame(history.history)
+hist['epoch'] = history.epoch
 
-print('Single window of past history')
-print(x_train_uni[0])
-print('\n Target deaths to predict')
-print(y_train_uni[0])
+plt.scatter(x=hist['epoch'],y=hist['loss'])
+plt.show()
 
-def create_time_steps(length):
-    return list(range(-length, 0))
+pred_list = []
 
-def show_plot(plot_data, delta, title):
-    labels = ['History', 'True Future', 'Model Prediction']
-    marker = ['.-', 'rx', 'go']
-    time_steps = create_time_steps(plot_data[0].shape[0])
-    if delta:
-        future = delta
-    else:
-        future = 0
-    
-    plt.title(title)
-    for i, x in enumerate(plot_data):
-        if i:
-            plt.plot(future, plot_data[i], marker[i], markersize=10,
-                     label = labels[i])
-        else:
-            plt.plot(time_steps, plot_data[i].flatten(), marker[i],
-                     label = labels[i])
-    plt.legend()
-    plt.xlim([time_steps[0], (future+5)*2])
-    plt.xlabel('Time-Step')
-    return plt
+batch = train[-n_input:].reshape((1, n_input, n_features))
 
-show_plot([x_train_uni[0], y_train_uni[0]], 0, 'Bruh moment')
+for i in range(n_input):
+    pred_list.append(model.predict(batch)[0])
+    batch = np.append(batch[:,1:,:], [[pred_list[i]]], axis=1)
 
-def baseline(history):
-    return np.mean(history)
+### Create a list with the next week of dates from our last date entry
+add_dates = [pd.to_datetime(df.index[-1]) + DateOffset(days=x) for x in range(0, n_input + 1)]
+### Filter out the time from the newly added dates
+add_dates = [str(add_dates[d]).split(' ')[0] for d in range(0, len(add_dates))]
 
-show_plot([x_train_uni[0], y_train_uni[0], baseline(x_train_uni[0])],
-          0, 'Baseline Bruh Moment')
+future_dates = pd.DataFrame(index=add_dates[1:], columns=df.columns)
 
-BATCH_SIZE = 64
-BUFFER_SIZE = 10000
+df_predict = pd.DataFrame(scaler.inverse_transform(pred_list),
+                          index=future_dates[-n_input:].index, columns=['Prediction'])
 
-train_univariate = tf.data.Dataset.from_tensor_slices((x_train_uni, y_train_uni))
-train_univariate = train_univariate.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+df_proj = pd.concat([df, df_predict], axis=1)
 
-val_univariate = tf.data.Dataset.from_tensor_slices((x_val_uni, y_val_uni))
-val_univariate = val_univariate.batch(BATCH_SIZE).repeat()
+### Print the prediction for the next week
+print(df_proj.tail(n_input))
 
-simple_lstm_model = tf.keras.models.Sequential([
-    tf.keras.layers.LSTM(8, input_shape = x_train_uni.shape[-2:]),
-    tf.keras.layers.Dense(1)
-])
-
-simple_lstm_model.compile(optimizer='adam', loss='mae')
-
-
-EVALUATION_INTERVAL = len(uni_data)
-EPOCHS = 10
-
-simple_lstm_model.fit(train_univariate, epochs=EPOCHS,
-                      steps_per_epoch = EVALUATION_INTERVAL,
-                      validation_data=val_univariate, validation_steps=50)
-
-for x, y in val_univariate.take(3):
-    plot = show_plot([x[0].numpy(), y[0].numpy(),
-                      simple_lstm_model.predict(x)[0]], 0, 'Bruh LSTM Model')
-    plot.show()
-
-
-
+### Graph the predictions
+plt.scatter(x=df_proj.index, y=df_proj['Deaths'])
+plt.scatter(x=df_proj.index, y=df_proj['Prediction'])
+plt.xticks([0,10,20,30,40,50,60,70,80,90,100], rotation=45)
+plt.show()

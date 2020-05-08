@@ -9,20 +9,21 @@ import requests
 import pandas as pd
 
 def getData(univariate = 'Deaths'):
-    
+
     response = requests.get("https://covidapi.info/api/v1/global/count")
     json = response.json()['result']
-      
+
     response_data = pd.DataFrame.from_dict(json)
-    
+
     df = pd.DataFrame(data=response_data).T
     df = df.reset_index(level=None, drop=False, col_level=0)
     df.columns = ['Date Time', 'Confirmed', 'Deaths', 'Recovered']
-    
-    uni_data = df[univariate]
-    uni_data.index = df['Date Time']
-    
-    return uni_data
 
+    uni_data = pd.DataFrame();
+
+    uni_data[univariate] = df[univariate]
+    uni_data.index = df['Date Time']
+
+    return uni_data
 
 
