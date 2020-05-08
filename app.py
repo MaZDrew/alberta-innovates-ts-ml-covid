@@ -42,7 +42,6 @@ generator = TimeseriesGenerator(train, train, length = n_input, batch_size = 2)
 
 model = Sequential()
 model.add(LSTM(200, activation='relu', input_shape = (n_input, n_features)))
-model.add(Dropout(0.15))
 model.add(Dense(1))
 
 optimizer = keras.optimizers.Adam(learning_rate=0.001)
@@ -73,6 +72,7 @@ future_dates = pd.DataFrame(index=add_dates[1:], columns=df.columns)
 
 df_predict = pd.DataFrame(scaler.inverse_transform(pred_list),
                           index=future_dates[-n_input:].index, columns=['Prediction'])
+df_predict = df_predict.round(0)
 
 df_proj = pd.concat([df, df_predict], axis=1)
 
@@ -84,3 +84,4 @@ plt.scatter(x=df_proj.index, y=df_proj['Deaths'])
 plt.scatter(x=df_proj.index, y=df_proj['Prediction'])
 plt.xticks([0,10,20,30,40,50,60,70,80,90,100], rotation=45)
 plt.show()
+
