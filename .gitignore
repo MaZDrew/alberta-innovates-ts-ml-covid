@@ -1,4 +1,3 @@
 .spyproject
-__pycache__
+**/__pycache__
 **/serviceAccountKey.json
-
