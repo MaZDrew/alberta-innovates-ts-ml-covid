@@ -60,6 +60,9 @@ def addGlobal(statistic, values, predictions):
     
     globalRef = db.reference(path='statistics/global/{}/'.format(str(statistic).lower()))
     
+    maxDomain = predictions.index[-1]
+    minDomain = values.index[0]
+    
     value = getCartesianValuesAsDict(statistic, values)
     prediction = getCartesianPredictionsAsDict(predictions)
     
@@ -70,8 +73,6 @@ def addGlobal(statistic, values, predictions):
     predictionMaxRange = prediction[1]
     
     maxRange = valueMaxRange
-    maxDomain = predictions.index[-1]
-    minDomain = values.index[0]
     
     if(predictionMaxRange > maxRange):
         maxRange = predictionMaxRange

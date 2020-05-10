@@ -28,14 +28,19 @@ from tensorflow.keras.layers import Dropout
 
 #from modules import database
 
-def createSimpleModelLSTM(n_input_layers, n_features, history_window, dropout=False, activation_function='relu'):
+def createSimpleLinearModel(n_input_layers, n_features, history_window):
     
     model = Sequential()
-    model.add(LSTM(n_input_layers, activation=activation_function, input_shape = (history_window, n_features)))
+    model.add(LSTM(n_input_layers, activation='relu', input_shape = (history_window, n_features)))
+    model.add(Dense(1))
     
-    if(dropout == True):
-        model.add(Dropout(0.2))
-        
+    return model
+
+def createSimpleRateModel(n_input_layers, n_features, history_window):
+    
+    model = Sequential()
+    model.add(LSTM(n_input_layers, activation='tanh', input_shape = (history_window, n_features)))
+    model.add(Dropout(0.2))
     model.add(Dense(1))
     
     return model
@@ -46,6 +51,7 @@ def trainSimpleLSTM(model, data, history_window, n_batch, n_epochs):
     
     train = data
     
+    #Calculate this once
     scaler = MinMaxScaler()
     scaler.fit(train)
     
