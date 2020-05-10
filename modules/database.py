@@ -2,9 +2,10 @@
 """
 Created on Thu May  7 21:50:30 2020
 
-@author: Morgan
+@author: Brayden, Morgan
 """
 
+import numpy as np
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
@@ -17,40 +18,67 @@ if not firebase_admin._apps:
     
 def getCartesianPredictionsAsDict(predictions):
     
-    predictionData = {}
+    data = {}
+    
+    maxRange = -np.inf
     
     for index, row in predictions.iterrows():
-        predictionData[index] = {
-            'x':index,
-            'y':row['Prediction']
+        
+        prediction = row['Prediction']
+        
+        if(prediction > maxRange):
+            maxRange = prediction
+        
+        data[index] = {
+            'x' : index,
+            'y' : prediction
         }
         
-    return predictionData
+    return [data, maxRange]
 
 def getCartesianValuesAsDict(statistic, values):
     
-    valueData = {}
+    data = {}
+    
+    maxRange = -np.inf
     
     for index, row in values.iterrows():
-        valueData[index] = {
-            'x':index,
-            'y':row[statistic]
+        
+        value = row[statistic]
+        
+        if(value > maxRange):
+            maxRange = value
+            
+        data[index] = {
+            'x' : index,
+            'y' : value
         }
         
-    return valueData
+    return [data, maxRange]
         
-def addGlobal(statistic, df, n_input):
+def addGlobal(statistic, values, predictions):
     
     globalRef = db.reference(path='statistics/global/{}/'.format(str(statistic).lower()))
     
-    valuesRef = globalRef.child('values')
-    predictionsRef = globalRef.child('predictions')
+    value = getCartesianValuesAsDict(statistic, values)
+    prediction = getCartesianPredictionsAsDict(predictions)
     
-    values = df.head(len(df) - n_input)
-    predictions = df.tail(n_input)
+    valueData = value[0]
+    predictionData = prediction[0]
     
-    valueData = getCartesianValuesAsDict(statistic, values)
-    predictionData = getCartesianPredictionsAsDict(predictions)
+    valueMaxRange = value[1]
+    predictionMaxRange = prediction[1]
+    
+    maxRange = valueMaxRange
+    maxDomain = predictions.index[-1]
+    minDomain = values.index[0]
+    
+    if(predictionMaxRange > maxRange):
+        maxRange = predictionMaxRange
         
-    predictionsRef.set(predictionData)
-    valuesRef.set(valueData)
+    globalRef.child('values').set(valueData)
+    globalRef.child('predictions').set(predictionData)
+    globalRef.child('maxRange').set(maxRange)
+    globalRef.child('maxDomain').set(maxDomain)
+    globalRef.child('minDomain').set(minDomain)
+    
