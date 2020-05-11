@@ -25,9 +25,6 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import LSTM
 from tensorflow.keras.layers import Dropout
 
-
-#from modules import database
-
 def createSimpleLinearModel(n_input_layers, n_features, history_window):
     
     model = Sequential()
@@ -49,17 +46,17 @@ def trainSimpleLSTM(model, data, history_window, n_batch, n_epochs):
     
     print(data)
     
-    train = data
+    trainingData = data
     
     #Calculate this once
     scaler = MinMaxScaler()
-    scaler.fit(train)
+    scaler.fit(trainingData)
     
-    train = scaler.transform(train)
+    trainingData = scaler.transform(trainingData)
     
     generator = TimeseriesGenerator(
-        train,
-        train,
+        trainingData,
+        trainingData,
         length = history_window,
         batch_size = n_batch
     )
@@ -75,7 +72,7 @@ def trainSimpleLSTM(model, data, history_window, n_batch, n_epochs):
     plt.scatter(x=hist['epoch'],y=hist['loss'])
     plt.show()
     
-    return [train, scaler]   
+    return trainingData, scaler
     
 def makePrediction(statistic, model, df, train, scaler,
                    n_features, prediction_window, history_window):

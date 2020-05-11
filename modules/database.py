@@ -16,45 +16,34 @@ if not firebase_admin._apps:
         'databaseURL':'https://ml-covid.firebaseio.com/'
     })
     
-def getCartesianPredictionsAsDict(predictions):
-    
-    data = {}
-    
-    maxRange = -np.inf
-    
-    for index, row in predictions.iterrows():
-        
-        prediction = row['Prediction']
-        
-        if(prediction > maxRange):
-            maxRange = prediction
-        
-        data[index] = {
-            'x' : index,
-            'y' : prediction
-        }
-        
-    return [data, maxRange]
-
 def getCartesianValuesAsDict(statistic, values):
     
     data = {}
     
+    #Start the min / max at positive and negative infinity
     maxRange = -np.inf
+    minRange = np.inf
     
+    #iterate the dataframes rows by index
     for index, row in values.iterrows():
         
         value = row[statistic]
         
+        #check for the maximum value
         if(value > maxRange):
             maxRange = value
+        
+        #check for the minimum value
+        if(value < minRange):
+            minRange = value
             
+        #store the time and value as cartesian coords in a dictionary
         data[index] = {
             'x' : index,
             'y' : value
         }
         
-    return [data, maxRange]
+    return data, minRange, maxRange
         
 def addGlobal(statistic, values, predictions):
     
@@ -63,23 +52,33 @@ def addGlobal(statistic, values, predictions):
     maxDomain = predictions.index[-1]
     minDomain = values.index[0]
     
-    value = getCartesianValuesAsDict(statistic, values)
-    prediction = getCartesianPredictionsAsDict(predictions)
-    
-    valueData = value[0]
-    predictionData = prediction[0]
-    
-    valueMaxRange = value[1]
-    predictionMaxRange = prediction[1]
+    valueData, valueMinRange, valueMaxRange = getCartesianValuesAsDict(statistic, values)
+    predictionData, predictionMinRange, predictionMaxRange = getCartesianValuesAsDict('Prediction', predictions)
     
     maxRange = valueMaxRange
+    minRange = valueMinRange
     
     if(predictionMaxRange > maxRange):
         maxRange = predictionMaxRange
+    
+    if(predictionMinRange < minRange):
+        minRange = predictionMinRange
         
+    rangeData = {
+        'minRange': minRange,
+        'maxRange': maxRange
+    }
+    
+    domainData = {
+        'minDomain': minDomain,
+        'maxDomain': maxDomain
+    }
+    
+    #Add the values and predictions to the database
     globalRef.child('values').set(valueData)
     globalRef.child('predictions').set(predictionData)
-    globalRef.child('maxRange').set(maxRange)
-    globalRef.child('maxDomain').set(maxDomain)
-    globalRef.child('minDomain').set(minDomain)
+    
+    #Add the range and domain data to the database
+    globalRef.child('range').set(rangeData)
+    globalRef.child('domain').set(domainData)
     

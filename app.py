@@ -14,33 +14,44 @@ import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
+#How many days in the future we want to make our prediction
 prediction_window = 7
+#How many days are we looking at to make our prediction
 history_window = 7
 
 n_epochs = 5
-n_input_layers = 100
 batch_size = 2
 n_features = 1
+n_input_layers = 100
 
-n_loops = 50
+n_iters = 5
 
-#statistics = ['Deaths','Confirmed','Recovered','Concurrent','Death_Rate','Confirmed_Rate','Recovered_Rate']
-statistics = ['Death_Rate']
+statistics = ['Deaths','Confirmed','Recovered','Concurrent','Death_Rate','Confirmed_Rate','Recovered_Rate', 'Concurrent_Rate']
 
+#statistics = ['Concurrent_Rate']
+
+#Loop through all of our statistics
 for statistic in statistics:
     
     currentModel = None
+    
+    #create a dataframe we can store a reference of all the predictions
     all_predictions = pd.DataFrame();
+    
+    #Grab the data from the Covid API
     data = data_request.getData(statistic)
     
+    #if we are using rate statistic, use a rate model otherwise linear
     if(statistic.find('_Rate') is not -1):
         currentModel = model.createSimpleRateModel(n_input_layers, n_features, history_window)
     else:
         currentModel = model.createSimpleLinearModel(n_input_layers, n_features, history_window)
     
-    for i in range(0, n_loops):
+    #how many times we are iterating to average the out the prediction values
+    for i in range(0, n_iters):
         
-        trainData = model.trainSimpleLSTM(
+        #Train the model
+        trainingData, scaler = model.trainSimpleLSTM(
             currentModel,
             data,
             history_window,
@@ -48,29 +59,31 @@ for statistic in statistics:
             n_epochs
         )
     
-        predictions = model.makePrediction(
+        #Make a prediction
+        results = model.makePrediction(
             statistic, currentModel, data,
-            trainData[0], trainData[1],
+            trainingData, scaler,
             n_features, prediction_window, history_window
         )
         
-        val = predictions.head(len(predictions) - prediction_window)
-        pred = predictions.tail(prediction_window)
+        #Grab the values from our prediction results
+        values = results.head(len(results) - prediction_window)
+        predictions = results.tail(prediction_window)
         
-        all_predictions[i] = pred['Prediction']
-        
+        #Add the newest set of predictions
+        all_predictions[i] = predictions['Prediction']
         print('{} cycle {}'.format(statistic, i))
     
-    print(all_predictions)
-    
-    dfm_predict = pd.DataFrame(
+    #Make a new dataframe that is the mean of all our predictions
+    df_predict_mean = pd.DataFrame(
         all_predictions.mean(axis=1),
         index=all_predictions.index,
         columns=['Prediction']
     )
     
-    dfm_predict = dfm_predict.round(0)
+    #Round all of the mean's of the predicted values
+    df_predict_mean = df_predict_mean.round(0)
+    print(df_predict_mean);
     
-    print(dfm_predict);
-    
-    #database.addGlobal(statistic, val, dfm_predict)
+    #Store the results in the database
+    database.addGlobal(statistic, values, df_predict_mean)
