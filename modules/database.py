@@ -45,11 +45,13 @@ def getCartesianValuesAsDict(statistic, values):
         
     return data, minRange, maxRange
         
-def addGlobal(statistic, values, predictions):
+def addGlobal(statistic, scope, values, predictions):
     
-    globalRef = db.reference(path='statistics/global/{}/'.format(str(statistic).lower()))
+    globalRef = db.reference(path='statistics/{}/{}/'.format(scope, str(statistic).lower()))
     
+    #get the max domain as the last preditions timestamp
     maxDomain = predictions.index[-1]
+    #get the minimum domain from the first values timestamp
     minDomain = values.index[0]
     
     valueData, valueMinRange, valueMaxRange = getCartesianValuesAsDict(statistic, values)

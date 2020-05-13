@@ -8,10 +8,17 @@ Created on Sat Apr 11 16:42:34 2020
 import requests
 import pandas as pd
 
-def getData(statistic = 'Deaths'):
+def getData(statistic, scope):
+    
+    apiUrl = ''
+    
+    if(scope == 'global'):
+        apiUrl = 'https://covidapi.info/api/v1/global/count'
+    else:
+        apiUrl = 'https://covidapi.info/api/v1/country/{}'.format(scope)
 
     #Get the JSON data from the Covid API
-    response = requests.get("https://covidapi.info/api/v1/global/count")
+    response = requests.get(apiUrl)
     json = response.json()['result']
 
     #Convert the JSON data to a pandas dataframe
@@ -28,19 +35,19 @@ def getData(statistic = 'Deaths'):
     df['Concurrent'] = df.apply(lambda x: (x['Confirmed'] - x['Recovered'] - x['Deaths']), axis=1)
     
     #calculate the rates
-    df['Death_Rate'] = df['Deaths'].diff();
-    df['Confirmed_Rate'] = df['Confirmed'].diff();
-    df['Recovered_Rate'] = df['Recovered'].diff();
-    df['Concurrent_Rate'] = df['Concurrent'].diff();
+    df['Death_Rate'] = df['Deaths'].diff()
+    df['Confirmed_Rate'] = df['Confirmed'].diff()
+    df['Recovered_Rate'] = df['Recovered'].diff()
+    df['Concurrent_Rate'] = df['Concurrent'].diff()
     
     #set the first value of these rates to 0, as they are NaN
-    df['Death_Rate'][0] = 0;
-    df['Confirmed_Rate'][0] = 0;
-    df['Recovered_Rate'][0] = 0;
-    df['Concurrent_Rate'][0] = 0;
+    df['Death_Rate'][0] = 0
+    df['Confirmed_Rate'][0] = 0
+    df['Recovered_Rate'][0] = 0
+    df['Concurrent_Rate'][0] = 0
 
     #Make a new data frame with the inputted statistic
-    uni_data = pd.DataFrame();
+    uni_data = pd.DataFrame()
 
     uni_data[statistic] = df[statistic]
     uni_data.index = df['Date Time']
