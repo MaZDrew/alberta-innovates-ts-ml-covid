@@ -12,7 +12,7 @@ Based Off:
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 from pandas.tseries.offsets import DateOffset
 
@@ -69,8 +69,10 @@ def trainSimpleLSTM(model, data, history_window, n_batch, n_epochs):
     hist = pd.DataFrame(history.history)
     hist['epoch'] = history.epoch
     
+    """
     plt.scatter(x=hist['epoch'],y=hist['loss'])
     plt.show()
+    """
     
     return trainingData, scaler
     
@@ -83,7 +85,7 @@ def makePrediction(statistic, model, df, train, scaler,
     
     for i in range(prediction_window):
         pred_list.append(model.predict(batch)[0])
-        batch = np.append(batch[:,1:,:], [[pred_list[i]]], axis=1)
+        batch = np.append(batch[:,1:,:], [[ pred_list[i] ]], axis=1)
     
     ### Append the days we want to predict
     add_dates = [pd.to_datetime(df.index[-1]) + DateOffset(days=x) for x in range(0, prediction_window + 1)]
@@ -107,9 +109,11 @@ def makePrediction(statistic, model, df, train, scaler,
     print(df_proj.tail(prediction_window))
     
     ### Graph the predictions
+    """
     plt.scatter(x=df_proj.index, y=df_proj[statistic])
     plt.scatter(x=df_proj.index, y=df_proj['Prediction'])
     plt.xticks([0,10,20,30,40,50,60,70,80,90,100], rotation=45)
     plt.show()
+    """
     
     return df_proj

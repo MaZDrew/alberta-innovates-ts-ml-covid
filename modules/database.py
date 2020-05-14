@@ -54,6 +54,8 @@ def addGlobal(statistic, scope, values, predictions):
     #get the minimum domain from the first values timestamp
     minDomain = values.index[0]
     
+    lastCurrentValueDate = values.index[-1]
+    
     valueData, valueMinRange, valueMaxRange = getCartesianValuesAsDict(statistic, values)
     predictionData, predictionMinRange, predictionMaxRange = getCartesianValuesAsDict('Prediction', predictions)
     
@@ -76,6 +78,25 @@ def addGlobal(statistic, scope, values, predictions):
         'maxDomain': maxDomain
     }
     
+    lastPredictions = globalRef.child('predictions').order_by_key().get()
+    
+    """
+    historyNode = globalRef.child('history').get()
+    if(historyNode != None):
+        print('History Node cotains data')
+    """
+    
+    #Store the old predictions
+    
+    lastValues = globalRef.child('values').order_by_key().get()
+    lastHistoricValueDate = lastValues.popitem()[0]
+    
+    globalRef.child('history').set({
+        '{}'.format(lastHistoricValueDate) : lastPredictions
+    })
+    
+    globalRef.child('lastUpdated').set(lastCurrentValueDate)
+    
     #Add the values and predictions to the database
     globalRef.child('values').set(valueData)
     globalRef.child('predictions').set(predictionData)
@@ -83,4 +104,5 @@ def addGlobal(statistic, scope, values, predictions):
     #Add the range and domain data to the database
     globalRef.child('range').set(rangeData)
     globalRef.child('domain').set(domainData)
+    
     

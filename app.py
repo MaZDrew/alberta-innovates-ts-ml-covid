@@ -19,17 +19,18 @@ prediction_window = 7
 #How many days are we looking at in the past to make our prediction
 history_window = 21
 #The number of iterations to train with to create an averaged out the prediction
-n_iters = 50
+n_iters = 100
 
 n_epochs = 5
 batch_size = 2
 n_features = 1
 n_input_layers = 100
 
-#statistics = ['Deaths','Confirmed','Recovered','Concurrent','Death_Rate','Confirmed_Rate','Recovered_Rate', 'Concurrent_Rate']
+statistics = ['Deaths','Confirmed','Recovered','Concurrent','Death_Rate','Confirmed_Rate','Recovered_Rate', 'Concurrent_Rate']
+#scopes = ['global','CAN', 'USA']
 
-statistics = ['Death_Rate','Confirmed_Rate','Recovered_Rate', 'Concurrent_Rate']
-scopes = ['CAN']
+#statistics = ['Death_Rate']
+scopes = ['CAN', 'USA']
 
 for scope in scopes:
     
