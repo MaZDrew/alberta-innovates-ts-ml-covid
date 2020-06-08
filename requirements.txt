@@ -1,0 +1,7 @@
+numpy
+pandas
+firebase_admin
+requests
+matplotlib
+sklearn
+tensorflow
