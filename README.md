@@ -16,7 +16,7 @@ $ git clone https://github.com/MaZDrew/alberta-innovates-ts-ml-covid.git
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the dependencies
 
 ```python
-pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
 
 ## Usage
