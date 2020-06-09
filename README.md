@@ -26,7 +26,7 @@ If you wish to write the values to a firebase database you must add your `servic
 To generate predictions for other countries or globally add its country code e.g `CAN` or `global` as a string to the `scopes` array.
 
 Predictions can be generated for: `Deaths`, `Confirmed`, `Recovered`, and `Concurrent`, as well as their respective rates.
-`Concurrent` is understood as `Confirmed` - `Recovered` - `Deaths`
+`Concurrent` is understood as being equal to `Confirmed` - `Recovered` - `Deaths`
 
 An example of how to use the model can be found in `app.py`
 To begin training the model.
