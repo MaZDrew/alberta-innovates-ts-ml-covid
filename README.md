@@ -7,7 +7,7 @@ The Covid-19 dataset for this project is provided from https://covidapi.info.
 
 ## Installation
 
-Create a new folder and navigate to its directory root
+Clone this repository
 
 ```bash
 $ git clone https://github.com/MaZDrew/alberta-innovates-ts-ml-covid.git
@@ -19,21 +19,20 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install the dep
 pip install -r requirements.txt
 ```
 
-To begin training the model run the example file
+## Usage
+
+If you want to write the values to a firebase database you must add your `serviceAccountKey.json` to the root of the project directory which can be found from your firebase project settings. You must also replace the `databaseURL` inside of `modules/database.py` with the database URL of your firebase project. It will also write the history of the previous day to keep a catalouge of all previous predictions for comparison and accuracy checking.
+
+This example will run data for all available statistics `Deaths, Confirmed, Recovered and Active cases` (and there rates) for Canada and the United States.
+
+To generate predictions for other countries or globally add its country code e.g `CAN` or `global` as a string to the `scopes` array.
+
+An example of how to use the model can be found in `app.py`
+To begin training the model.
 
 ```python
 $ python app.py
 ```
-
-## Usage
-
-If you want to write the values to a firebase database you must add your `serviceAccountKey.json` to the root of the project directory and replace the `databaseURL` inside of `modules/database.py` with the database URL of your firebase project. It will also write the history of the previous day to keep a catalouge of all previous predictions for comparison and accuracy checking.
-
-An example of how to use the model can be found in `app.py`
-
-This example will run data for all available statistics Deaths, Confirmed, Recovered and Active cases (and there rates) for Canada and the United States.
-
-To generate predictions for other countries or globally add its country code e.g `CAN` or `global` as a string to the `scopes` array.
 
 ## Contributing
 
