@@ -4,6 +4,7 @@ This project was created for https://albertainnovates.ca/impact/newsroom/covid-1
 The aim of this project was to provide predictions of future COVID-19 statistics via machine learning. We decided to make a LSTM (Long Short Term Memory) Model that runs 'n' simulations for each statistic of interest, and then averages them out for the "final" prediction.
 
 The Covid-19 dataset for this project is provided from https://covidapi.info.
+A visualization of the data can be found on https://ml-covid.web.app/. 
 
 ## Installation
 
